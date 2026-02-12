@@ -1,5 +1,8 @@
 --!strict
 
+-- TODO: add time to unpack the pack, which is per rarity
+
+
 export type PackEntry = {
 	PackId: string,
 	DisplayName: string,

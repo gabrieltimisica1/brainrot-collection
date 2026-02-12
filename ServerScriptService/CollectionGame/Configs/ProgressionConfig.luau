@@ -19,4 +19,22 @@ local ProgressionConfig: LevelConfig = {
     }
 }
 
-return ProgressionConfig
+local GradingConfig = {
+    Cost = 100, -- TODO: this needs to be moved somewhere else
+    Grades = {
+        ["F"] = { Chance = 1, Multiplier = 1 },
+        ["E"] = { Chance = 2, Multiplier = 2 },
+        ["D"] = { Chance = 3, Multiplier = 3 },
+        ["C"] = { Chance = 4, Multiplier = 4 },
+        ["B"] = { Chance = 15, Multiplier = 5 },
+        ["A"] = { Chance = 10, Multiplier = 6 },
+        ["S"] = { Chance = 1, Multiplier = 7 },
+        ["S+"] = { Chance = 0.5, Multiplier = 8 },
+        ["SS"] = { Chance = 0.25, Multiplier = 9 },
+    }
+}
+
+return {
+    Progression = ProgressionConfig,
+    Grading = GradingConfig
+}

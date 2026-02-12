@@ -5,6 +5,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Store = require(ServerScriptService.CollectionGame.Data.Store)
 local ManageBase = require(ServerScriptService.CollectionGame.Core.ManageBase)
 local CardsSpawner = require(ServerScriptService.CollectionGame.Core.CardsSpawner)
+local InventoryManager = require(ServerScriptService.CollectionGame.Core.InventoryManager)
 
 local function onPlayerAdded(player: Player)
 	print("Lifecycle: Player Added - " .. player.Name)
@@ -12,6 +13,7 @@ local function onPlayerAdded(player: Player)
 	Store.InitializeSession(player)
 	ManageBase.Initialize(player)
     CardsSpawner.InitializeForPlayer(player)
+    InventoryManager.Initialize(player)
 
 	player.CharacterAdded:Connect(function(character)
 		ManageBase.TeleportToOwnedBase(player)
@@ -22,6 +24,7 @@ local function onPlayerRemoving(player: Player)
 	print("Lifecycle: Player Removing - " .. player.Name)
     CardsSpawner.StopForPlayer(player)
 	ManageBase.ReleaseFromPlayer(player)
+    InventoryManager.Cleanup(player)
 	Store.ClearSession(player)
 end
 

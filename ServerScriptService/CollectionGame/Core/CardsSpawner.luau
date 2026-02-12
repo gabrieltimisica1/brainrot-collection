@@ -1,12 +1,16 @@
 --!strict
-local Workspace = game:GetService("Workspace")
-local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
 
 local Store = require(script.Parent.Parent.Data.Store)
 local WorkspaceUtils = require(script.Parent.Parent.Utils.WorkspaceUtils)
+local PackConfig = require(script.Parent.Parent.Configs.PackConfig)
+
+local PackCollectedEvent = game:GetService("ServerScriptService").CollectionGame:WaitForChild("Events"):WaitForChild("PackCollected")
+
+-- Verify it's a BindableEvent
+assert(PackCollectedEvent.ClassName == "BindableEvent", "PackCollected must be a BindableEvent")
+
 
 local Spawner = {}
 local activeLoops = {}
@@ -18,7 +22,47 @@ local SPAWN_RATE = 1
 
 -- Assets
 local Assets = ServerStorage:FindFirstChild("Assets") or error("Spawner: ServerStorage.Assets folder not found")
-local CardModelBase = Assets.Cards.fanum_tax:FindFirstChild("fanum_tax_common") or error("Spawner: ServerStorage.Assets.CardModel not found")
+local PacksFolder = Assets:FindFirstChild("Packs") or error("Spawner: ServerStorage.Assets.Packs folder not found")
+
+-- Create the billboard on the pack
+local function CreateInteraction(cardModel: Model | BasePart, packData: any)
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.ActionText = "Buy"
+    prompt.ObjectText = packData.DisplayName or "Pack"
+    prompt.KeyboardKeyCode = Enum.KeyCode.E
+    prompt.HoldDuration = 0  -- Instant interaction
+    prompt.RequiresLineOfSight = false
+    prompt.Parent = cardModel
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 300, 0, 100) -- Bigger billboard
+    billboard.StudsOffset = Vector3.new(0, 4, 0) -- Slightly higher
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = 20
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextStrokeColor3 = Color3.new(0, 0, 0) -- Better visibility
+    textLabel.TextScaled = true
+    textLabel.Text = packData.Description or "A mystery pack"
+    textLabel.Parent = billboard
+    
+    billboard.Parent = cardModel
+    
+    prompt.Triggered:Connect(function(triggerPlayer, _)
+        -- Add to inventory
+        local packId = cardModel:GetAttribute("PackId")
+        if packId then
+            PackCollectedEvent:Fire(triggerPlayer, packId)
+		else
+			error("Spawner: PackId not found for card " .. cardModel.Name)
+		end
+        cardModel:Destroy()
+    end)
+end
 
 -- Global Movement Loop
 RunService.Heartbeat:Connect(function(dt)
@@ -68,21 +112,50 @@ function Spawner.SpawnForPlayer(player: Player, baseIndex: number)
 	
 	local cardFolder = activeCardFolders[player.UserId]
 	if not cardFolder then
-		warn("Spawner: No active card folder for player " .. player.Name)
+		error("Spawner: No active card folder for player " .. player.Name)
 		return
 	end
 	
-	local card = CardModelBase:Clone()
-	card.Name = "Card"
+    -- Pick a random pack
+    local packKeys = {}
+    for key, _ in pairs(PackConfig) do
+        table.insert(packKeys, key)
+    end
+    
+    if #packKeys == 0 then
+        error("Spawner: No packs configured")
+        return
+    end
+    
+    local randomPackId = packKeys[math.random(1, #packKeys)]
+    local packModel = PacksFolder:FindFirstChild(randomPackId)
+    
+    if not packModel then
+        error("Spawner: Pack model not found regarding PackId: " .. tostring(randomPackId))
+        return
+    end
+
+	local card = packModel:Clone()
+	card.Name = "Pack" -- or randomPackId? Keeping generic "Pack" or "Card"
 	card.Parent = cardFolder
 	
 	card:SetAttribute("TargetPos", despawnerPart.Position)
 	card:SetAttribute("OwnerName", player.Name)
+	card:SetAttribute("PackId", randomPackId)
+    
+    -- Create Interaction (Billboard + Prompt)
+    local packData = PackConfig[randomPackId]
+    if packData then
+        CreateInteraction(card, packData)
+    end
+    
+    -- Spawn slightly higher
+    local spawnOffset = Vector3.new(0, 2, 0)
 	
 	if card:IsA("Model") then
-		card:PivotTo(spawnerPart.CFrame)
+		card:PivotTo(spawnerPart.CFrame + spawnOffset)
 	elseif card:IsA("BasePart") then
-		card.CFrame = spawnerPart.CFrame
+		card.CFrame = spawnerPart.CFrame + spawnOffset
 	end
 end
 
@@ -106,8 +179,6 @@ function Spawner.InitializeForPlayer(player: Player)
     
     local cardFolder = pipeline:FindFirstChild("SpawnedCards")
     if not cardFolder then
-        -- Create if missing or error? User code implies expected existence or finding it.
-        -- User's previous code: `... or error(...) `
         activeLoops[player.UserId] = nil
         error("Spawner: SpawnedCards folder not found for Base " .. occupiedBase)
     end

@@ -16,6 +16,19 @@ local Store = {
 	}
 }
 
+local newPlayerPersistentData = {
+    Money = 0,
+    Collection = {},
+    Inventory = {},
+    PlacedPacks = {},
+}
+
+-- this is what the player gets when they join
+local playerTemporaryData = {
+    IncomeRate = 0,
+    occupiedBase = nil,
+}
+
 -- Initialize 8 bases (Global Server State)
 for i = 1, 8 do
 	Store.temporaryData.bases[i] = {
@@ -64,22 +77,25 @@ function Store.InitializeSession(player: Player)
     if savedData then
         if not savedData.Collection then savedData.Collection = {} end
         if not savedData.Money then savedData.Money = 0 end
-        if not savedData.SealedPacks then savedData.SealedPacks = 0 end
+        if not savedData.Inventory then savedData.Inventory = {} end
+        if not savedData.PlacedPacks then savedData.PlacedPacks = {} end
         
 		Store.persistentData.players[userId] = savedData
 	else
 		print("New player joined: " .. player.Name)
+        -- Deep copy or at least shallow copy to avoid reference sharing
 		Store.persistentData.players[userId] = {
-			Money = 0,
-			Collection = {},
-            SealedPacks = 0,
-		}
+            Money = newPlayerPersistentData.Money,
+            Collection = table.clone(newPlayerPersistentData.Collection),
+            Inventory = table.clone(newPlayerPersistentData.Inventory),
+            PlacedPacks = table.clone(newPlayerPersistentData.PlacedPacks),
+        }
 	end
     
 	Store.temporaryData.players[userId] = {
-		IncomeRate = 0,
-        occupiedBase = nil,
-	}
+        IncomeRate = playerTemporaryData.IncomeRate,
+        occupiedBase = playerTemporaryData.occupiedBase 
+    }
 end
 
 function Store.GetPlayerPersistentData(player: Player): Types.PlayerPersistentData
@@ -95,6 +111,17 @@ function Store.ClearSession(player: Player)
     Store.SaveToCloud(player)
 	Store.persistentData.players[userId] = nil
 	Store.temporaryData.players[userId] = nil
+end
+
+function Store.AddPackToInventory(player: Player, packId: string)
+    local persistentData = Store.GetPlayerPersistentData(player)
+    if not persistentData then return end
+    
+    if not persistentData.Inventory then
+        persistentData.Inventory = {}
+    end
+    
+    persistentData.Inventory[packId] = (persistentData.Inventory[packId] or 0) + 1
 end
 
 return Store
