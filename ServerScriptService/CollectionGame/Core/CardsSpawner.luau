@@ -17,7 +17,7 @@ local activeLoops = {}
 local activeCardFolders = {} -- [UserId] = Folder
 
 -- Configuration
-local BELT_SPEED = 50
+local BELT_SPEED = 1500
 local SPAWN_RATE = 1
 
 -- Assets
@@ -136,7 +136,7 @@ function Spawner.SpawnForPlayer(player: Player, baseIndex: number)
     end
 
 	local card = packModel:Clone()
-	card.Name = "Pack" -- or randomPackId? Keeping generic "Pack" or "Card"
+	card.Name = randomPackId
 	card.Parent = cardFolder
 	
 	card:SetAttribute("TargetPos", despawnerPart.Position)

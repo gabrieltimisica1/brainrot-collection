@@ -6,7 +6,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
 
 local Store = require(script.Parent.Parent.Data.Store)
-local PackConfig = require(script.Parent.Parent.Configs.PackConfig)
+local PackConfig = require(ServerScriptService.CollectionGame.Configs.PackConfig)
 
 local PackCollectedEvent = ServerScriptService.CollectionGame:WaitForChild("Events"):WaitForChild("PackCollected")
 
@@ -52,7 +52,7 @@ end)
 function InventoryManager.AddPackToInventory(player: Player, packId: string)
     Store.AddPackToInventory(player, packId)
     updateClient(player)
-    print(player.Name .. " collected pack: " .. packId)
+    print("SUCCESS: " .. player.Name .. " collected pack: " .. packId)
 end
 
 -- --- Placed Packs Logic ---
