@@ -6,6 +6,8 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+local PlacementManager = require(script.Parent:WaitForChild("PlacementManager"))
+
 local InventoryUI = {}
 
 -- Variables for UI elements
@@ -109,12 +111,7 @@ local function createSlot(id: string, count: number)
     button.Parent = slot
     
     button.MouseButton1Click:Connect(function()
-        local InventoryRemote = ReplicatedStorage:WaitForChild("InventoryRemote")
-        local character = player.Character
-        if character and character:FindFirstChild("PrimaryPart") then
-            local pos = character.PrimaryPart.Position + (character.PrimaryPart.CFrame.LookVector * 5)
-            InventoryRemote:FireServer("PlacePack", id, pos)
-        end
+        PlacementManager.EquipPack(id)
     end)
     
     return slot

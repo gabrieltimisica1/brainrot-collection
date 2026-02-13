@@ -87,7 +87,7 @@ local function spawnPlacedPackVisual(player: Player, packEntry: any)
     local prompt = Instance.new("ProximityPrompt")
     prompt.ActionText = "Open"
     prompt.ObjectText = "Unlocking..."
-    prompt.HoldDuration = 1
+    prompt.HoldDuration = 0
     prompt.Parent = visual
     
     -- Initial State

@@ -17,7 +17,7 @@ local activeLoops = {}
 local activeCardFolders = {} -- [UserId] = Folder
 
 -- Configuration
-local BELT_SPEED = 1500
+local BELT_SPEED = 10
 local SPAWN_RATE = 1
 
 -- Assets
@@ -56,6 +56,7 @@ local function CreateInteraction(cardModel: Model | BasePart, packData: any)
         -- Add to inventory
         local packId = cardModel:GetAttribute("PackId")
         if packId then
+            print("Spawner: Firing PackCollected for " .. triggerPlayer.Name .. " - " .. packId)
             PackCollectedEvent:Fire(triggerPlayer, packId)
 		else
 			error("Spawner: PackId not found for card " .. cardModel.Name)
