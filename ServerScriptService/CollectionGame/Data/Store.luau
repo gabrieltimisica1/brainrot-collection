@@ -115,13 +115,9 @@ end
 
 function Store.AddPackToInventory(player: Player, packId: string)
     local persistentData = Store.GetPlayerPersistentData(player)
-    if not persistentData then return end
-    
-    if not persistentData.Inventory then
-        persistentData.Inventory = {}
-    end
-    
     persistentData.Inventory[packId] = (persistentData.Inventory[packId] or 0) + 1
+	print("Store: Added pack " .. packId .. " to inventory for " .. player.Name)
+	print(persistentData.Inventory)
 end
 
 return Store

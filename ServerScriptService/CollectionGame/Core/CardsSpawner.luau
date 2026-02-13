@@ -17,7 +17,7 @@ local activeLoops = {}
 local activeCardFolders = {} -- [UserId] = Folder
 
 -- Configuration
-local BELT_SPEED = 8
+local BELT_SPEED = 50
 local SPAWN_RATE = 1
 
 -- Assets
