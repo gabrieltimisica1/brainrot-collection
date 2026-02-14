@@ -69,8 +69,11 @@ end
 RunService.Heartbeat:Connect(function(dt)
 	for _, cardFolder in pairs(activeCardFolders) do
 		for _, card in ipairs(cardFolder:GetChildren()) do
-			local targetPos = card:GetAttribute("TargetPos")
-			if targetPos then
+			local startPos = card:GetAttribute("StartPos")
+			local moveDir = card:GetAttribute("MoveDirection")
+			local maxDist = card:GetAttribute("MaxDistance") or 90
+			
+			if startPos and moveDir then
 				local currentPos: Vector3
 				local currentCFrame: CFrame
 				
@@ -85,15 +88,14 @@ RunService.Heartbeat:Connect(function(dt)
 					continue
 				end
 				
-				local direction = (targetPos - currentPos).Unit
-				local distance = (targetPos - currentPos).Magnitude
+				local dist = (currentPos - startPos).Magnitude
 
-				if distance < 1 then
-					-- Reached despawner
+				if dist > maxDist then
+					-- Reached max distance
 					card:Destroy()
 				else
-					-- Move towards target
-					local newCFrame = currentCFrame + (direction * BELT_SPEED * dt)
+					-- Move in direction
+					local newCFrame = currentCFrame + (moveDir * BELT_SPEED * dt)
 					if card:IsA("Model") then
 						card:PivotTo(newCFrame)
 					else
@@ -101,6 +103,7 @@ RunService.Heartbeat:Connect(function(dt)
 					end
 				end
 			else
+				-- Card missing attributes or old format
 				card:Destroy()
 			end
 		end
@@ -109,7 +112,7 @@ end)
 
 function Spawner.SpawnForPlayer(player: Player, baseIndex: number)
 	local spawnerPart = WorkspaceUtils.GetSpawnerPart(baseIndex)
-	local despawnerPart = WorkspaceUtils.GetDespawnerPart(baseIndex)
+	-- Despawner part no longer needed for movement target
 	
 	local cardFolder = activeCardFolders[player.UserId]
 	if not cardFolder then
@@ -140,7 +143,11 @@ function Spawner.SpawnForPlayer(player: Player, baseIndex: number)
 	card.Name = randomPackId
 	card.Parent = cardFolder
 	
-	card:SetAttribute("TargetPos", despawnerPart.Position)
+	-- Set Attributes for Movement
+	card:SetAttribute("StartPos", spawnerPart.Position)
+	card:SetAttribute("MoveDirection", Vector3.new(1, 0, 0)) -- Always move to the right
+	card:SetAttribute("MaxDistance", 90) -- Triple the distance to 90 studs
+	
 	card:SetAttribute("OwnerName", player.Name)
 	card:SetAttribute("PackId", randomPackId)
     

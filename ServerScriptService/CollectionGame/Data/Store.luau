@@ -46,7 +46,7 @@ function Store.LoadFromCloud(player: Player): Types.PlayerPersistentData?
 	end)
 	
 	if success and data then
-		print("Store: Cloud data loaded", data)
+		--print("Store: Cloud data loaded", data)
 		return data
 	else
 		return nil

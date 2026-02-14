@@ -24,6 +24,9 @@ function ManageBase.AssignToPlayer(player: Player)
 		base.locked = false
 		sessionData.occupiedBase = baseIndex
 		
+		task.spawn(ManageBase.UpdateBasePhoto, baseIndex, player)
+		task.spawn(ManageBase.UpdateBaseName, baseIndex, player)
+		
 		print("ManageBase: Assigned " .. player.Name .. " to Base " .. baseIndex)
 		return baseIndex
 	else
@@ -31,6 +34,61 @@ function ManageBase.AssignToPlayer(player: Player)
         return nil
 	end
 end
+
+function ManageBase.UpdateBaseName(baseIndex: number, player: Player)
+	local baseModel = workspace:FindFirstChild("Base" .. baseIndex)
+	if not baseModel then return end
+
+	local display = baseModel:FindFirstChild("Display")
+	if not display then return end
+
+	local namePart = display:FindFirstChild("Name")
+	if not namePart or not namePart:IsA("BasePart") then return end
+
+	local surfaceGui = namePart:FindFirstChildOfClass("SurfaceGui")
+	if not surfaceGui then return end
+
+	local textLabel = surfaceGui:FindFirstChildWhichIsA("TextLabel", true)
+	if not textLabel then return end
+
+	surfaceGui.Enabled = true
+	textLabel.Visible = true
+
+	textLabel.Text = player.Name
+end
+
+
+function ManageBase.UpdateBasePhoto(baseIndex: number, player: Player)
+	local Players = game:GetService("Players")
+
+	local baseModel = workspace:FindFirstChild("Base" .. baseIndex)
+	if not baseModel then return end
+
+	local display = baseModel:FindFirstChild("Display")
+	if not display then return end
+
+	local photoPart = display:FindFirstChild("Photo")
+	if not photoPart or not photoPart:IsA("BasePart") then return end
+
+	local surfaceGui = photoPart:FindFirstChildOfClass("SurfaceGui")
+	if not surfaceGui then return end
+
+	local imageLabel = surfaceGui:FindFirstChildWhichIsA("ImageLabel", true)
+	if not imageLabel then return end
+
+	surfaceGui.Enabled = true
+	imageLabel.Visible = true
+	imageLabel.ImageTransparency = 0
+
+	local thumbnail = Players:GetUserThumbnailAsync(
+		player.UserId,
+		Enum.ThumbnailType.HeadShot,
+		Enum.ThumbnailSize.Size420x420
+	)
+
+	imageLabel.Image = thumbnail
+end
+
 
 -- Logic to release a base
 function ManageBase.ReleaseFromPlayer(player: Player)

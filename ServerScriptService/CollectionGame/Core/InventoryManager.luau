@@ -90,14 +90,42 @@ local function spawnPlacedPackVisual(player: Player, packEntry: any)
     prompt.HoldDuration = 0
     prompt.Parent = visual
     
+    -- Billboard for UI
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = visual
+    
+    -- Progress Bar UI
+    local barBg = Instance.new("Frame")
+    barBg.Name = "TimeBarBg"
+    barBg.Size = UDim2.new(0.8, 0, 0, 8)
+    barBg.Position = UDim2.new(0.1, 0, 0.85, 0)
+    barBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    barBg.BorderSizePixel = 0
+    barBg.Parent = billboard
+
+    local barFill = Instance.new("Frame")
+    barFill.Name = "TimeBarFill"
+    barFill.Size = UDim2.new(1, 0, 1, 0)
+    barFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    barFill.BorderSizePixel = 0
+    barFill.Parent = barBg
+
     -- Initial State
     local timeLeft = math.max(0, packEntry.UnlockTime - os.time())
+    local totalTime = packEntry.TotalTime or 10
+    
     if timeLeft > 0 then
         prompt.Enabled = false
-        prompt.ObjectText = "Unlocking... " .. timeLeft .. "s"
+        prompt.ObjectText = "Unlocking..." -- Simplified text, bar shows progress
+        barFill.Size = UDim2.new(timeLeft / totalTime, 0, 1, 0)
     else
         prompt.ObjectText = "Ready to Open!"
         prompt.Enabled = true
+        barFill.Size = UDim2.new(0, 0, 1, 0)
+        barBg.Visible = false -- Hide bar when done
     end
     
     -- Trigger Logic
@@ -145,6 +173,7 @@ function InventoryManager.PlacePack(player: Player, packId: string, position: Ve
         InstanceId = game:GetService("HttpService"):GenerateGUID(false),
         PackId = packId,
         UnlockTime = os.time() + duration,
+        TotalTime = duration,
         Position = { X = position.X, Y = position.Y, Z = position.Z } -- Serialize
     }
     
@@ -240,11 +269,23 @@ task.spawn(function()
                         local prompt = visual:FindFirstChildWhichIsA("ProximityPrompt")
                         if prompt and not prompt.Enabled then
                             local timeLeft = entry.UnlockTime - currentTime
+                            local totalTime = entry.TotalTime or 10
+                            
+                            -- Update Bar
+                            local barBg = visual:FindFirstChild("TimeBarBg", true)
+                            local barFill = barBg and barBg:FindFirstChild("TimeBarFill")
+                            
                             if timeLeft <= 0 then
                                 prompt.Enabled = true
                                 prompt.ObjectText = "Ready to Open!"
+                                if barBg then barBg.Visible = false end
                             else
-                                prompt.ObjectText = "Unlocking... " .. timeLeft .. "s"
+                                local secondsLeft = math.ceil(timeLeft)
+                                prompt.ObjectText = "Unlocking... " .. secondsLeft .. "s"
+                                if barFill then
+                                    local progress = math.clamp(timeLeft / totalTime, 0, 1)
+                                    barFill.Size = UDim2.new(progress, 0, 1, 0)
+                                end
                             end
                         end
                     end
